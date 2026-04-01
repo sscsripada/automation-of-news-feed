@@ -23,3 +23,8 @@ companies:
     category: competitor
     query: 'AWS OR "Amazon Web Services"'
     notes: Cloud platform launches, partnerships, and enterprise wins.
+    
+  - name: DigitalOcean
+    category: customer
+    query: '"partnership" OR data centers OR "strategy"'
+    notes: DO news.
