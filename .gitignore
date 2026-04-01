@@ -1,9 +1,9 @@
 .venv/
 __pycache__/
 .pytest_cache/
+*.egg-info/
 dist/
 build/
 *.pyc
 .DS_Store
 checkins/.latest-run.log
-
