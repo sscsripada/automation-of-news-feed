@@ -56,8 +56,10 @@ Update `config/watchlist.yaml` and change:
 2. Add a repository secret named `OPENAI_API_KEY` if you want AI summaries.
 3. Create a Slack app with an incoming webhook and add it to your target channel.
 4. Add a repository secret named `SLACK_WEBHOOK_URL` with the incoming webhook URL.
-5. The workflow in `.github/workflows/daily-news-checkin.yml` runs at `13:00 UTC` on weekdays, which is `8:00 AM` in Chicago during daylight saving time.
+5. The workflow in `.github/workflows/daily-news-checkin.yml` is set up to run close to `8:05 AM` Chicago time on weekdays using separate UTC schedules for standard time and daylight time.
 6. Each run writes a new file in `checkins/`, commits it back to the repo when there are changes, and posts the digest to Slack when `SLACK_WEBHOOK_URL` is configured.
+
+Because GitHub Actions scheduled workflows use UTC rather than a named local timezone, the run can be off by an hour for a few weekdays around the March and November daylight-saving transitions.
 
 ## Slack setup
 
