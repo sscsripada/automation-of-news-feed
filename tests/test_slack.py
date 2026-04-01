@@ -25,3 +25,4 @@ def test_build_slack_payload_contains_company_sections() -> None:
     assert payload["blocks"][0]["type"] == "header"
     assert "Oracle" in payload["blocks"][2]["text"]["text"]
     assert "Takeaway" in payload["blocks"][2]["text"]["text"]
+    assert "Links:" in payload["blocks"][2]["text"]["text"]

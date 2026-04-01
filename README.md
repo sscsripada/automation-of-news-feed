@@ -9,7 +9,7 @@ This repo generates a daily Markdown check-in covering news for a configurable w
 - Summarizes the news with OpenAI when `OPENAI_API_KEY` is available
 - Falls back to a simple headline-based summary when no API key is set
 - Writes a dated check-in document to `checkins/YYYY-MM-DD.md`
-- Includes a GitHub Actions workflow that can generate, commit, and post the check-in to Slack every weekday morning
+- Includes a GitHub Actions workflow that can generate, commit, and DM the check-in in Slack every weekday morning
 
 ## Current starter watchlist
 
@@ -54,23 +54,25 @@ Update `config/watchlist.yaml` and change:
 
 1. Create a GitHub repo and push this project.
 2. Add a repository secret named `OPENAI_API_KEY` if you want AI summaries.
-3. Create a Slack app with an incoming webhook and add it to your target channel.
-4. Add a repository secret named `SLACK_WEBHOOK_URL` with the incoming webhook URL.
-5. The workflow in `.github/workflows/daily-news-checkin.yml` is set up to run close to `8:05 AM` Chicago time on weekdays using separate UTC schedules for standard time and daylight time.
-6. Each run writes a new file in `checkins/`, commits it back to the repo when there are changes, and posts the digest to Slack when `SLACK_WEBHOOK_URL` is configured.
+3. Create a Slack app with a bot token and install it to your workspace.
+4. Add a repository secret named `SLACK_BOT_TOKEN` with the bot token.
+5. Set the target Slack user ID in `.github/workflows/daily-news-checkin.yml`.
+6. The workflow in `.github/workflows/daily-news-checkin.yml` is set up to run close to `8:05 AM` Chicago time on weekdays using separate UTC schedules for standard time and daylight time.
+7. Each run writes a new file in `checkins/`, commits it back to the repo when there are changes, and sends the digest to Slack DM when `SLACK_BOT_TOKEN` is configured.
 
 Because GitHub Actions scheduled workflows use UTC rather than a named local timezone, the run can be off by an hour for a few weekdays around the March and November daylight-saving transitions.
 
 ## Slack setup
 
-Use a Slack app with Incoming Webhooks.
+Use a Slack app with a bot token.
 
 1. In Slack, create a new app from scratch.
-2. Enable `Incoming Webhooks`.
-3. Add a webhook for the channel where you want the daily update posted.
-4. Copy the webhook URL into the GitHub secret `SLACK_WEBHOOK_URL`.
+2. In `OAuth & Permissions`, add the bot scope `chat:write`.
+3. Install or reinstall the app to your workspace.
+4. Copy the bot token into the GitHub secret `SLACK_BOT_TOKEN`.
+5. Find your Slack user ID and place it in the workflow as `SLACK_USER_ID`.
 
-The workflow posts a formatted message containing each watched company, top bullets, and quick source links.
+The workflow sends a formatted DM containing each watched company, top bullets, and quick source links.
 
 ## Tests
 

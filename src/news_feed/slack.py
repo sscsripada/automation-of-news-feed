@@ -9,6 +9,9 @@ import requests
 from news_feed.models import CompanyDigest
 
 
+SLACK_API_BASE_URL = "https://slack.com/api"
+
+
 def build_slack_payload(digests: list[CompanyDigest], report_date: date, lookback_days: int) -> dict[str, Any]:
     summary_text = f"Daily company news check-in for {report_date.isoformat()}."
     blocks: list[dict[str, Any]] = [
@@ -52,9 +55,39 @@ def build_slack_payload(digests: list[CompanyDigest], report_date: date, lookbac
     return {"text": summary_text, "blocks": blocks}
 
 
-def post_slack_webhook(webhook_url: str, payload: dict[str, Any], timeout: int = 20) -> None:
-    response = requests.post(webhook_url, json=payload, timeout=timeout)
-    response.raise_for_status()
+def post_slack_dm(bot_token: str, user_id: str, payload: dict[str, Any], timeout: int = 20) -> None:
+    headers = {
+        "Authorization": f"Bearer {bot_token}",
+        "Content-Type": "application/json; charset=utf-8",
+    }
+
+    open_response = requests.post(
+        f"{SLACK_API_BASE_URL}/conversations.open",
+        headers=headers,
+        json={"users": user_id},
+        timeout=timeout,
+    )
+    open_response.raise_for_status()
+    open_data = open_response.json()
+    if not open_data.get("ok"):
+        raise RuntimeError(f"Slack conversations.open failed: {open_data.get('error', 'unknown_error')}")
+
+    channel_id = open_data["channel"]["id"]
+    message_payload = {
+        "channel": channel_id,
+        "text": payload["text"],
+        "blocks": payload["blocks"],
+    }
+    message_response = requests.post(
+        f"{SLACK_API_BASE_URL}/chat.postMessage",
+        headers=headers,
+        json=message_payload,
+        timeout=timeout,
+    )
+    message_response.raise_for_status()
+    message_data = message_response.json()
+    if not message_data.get("ok"):
+        raise RuntimeError(f"Slack chat.postMessage failed: {message_data.get('error', 'unknown_error')}")
 
 
 def write_slack_payload(output_path: str, payload: dict[str, Any]) -> None:

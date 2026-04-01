@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from news_feed.pipeline import collect_digests, generate_checkin, render_markdown
-from news_feed.slack import build_slack_payload, post_slack_webhook, write_slack_payload
+from news_feed.slack import build_slack_payload, post_slack_dm, write_slack_payload
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--post-to-slack",
         action="store_true",
-        help="Post the digest to Slack using SLACK_WEBHOOK_URL.",
+        help="Post the digest to Slack DM using SLACK_BOT_TOKEN and SLACK_USER_ID.",
     )
     return parser
 
@@ -59,11 +59,12 @@ def main() -> None:
         write_slack_payload(str(slack_output), slack_payload)
 
     if args.post_to_slack:
-        webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-        if not webhook_url:
-            raise SystemExit("SLACK_WEBHOOK_URL is required when using --post-to-slack")
+        bot_token = os.getenv("SLACK_BOT_TOKEN")
+        user_id = os.getenv("SLACK_USER_ID")
+        if not bot_token or not user_id:
+            raise SystemExit("SLACK_BOT_TOKEN and SLACK_USER_ID are required when using --post-to-slack")
         slack_payload = build_slack_payload(digests, report_date=report_date, lookback_days=args.lookback_days)
-        post_slack_webhook(webhook_url, slack_payload)
+        post_slack_dm(bot_token, user_id, slack_payload)
 
     print(f"Generated {output}")
 
