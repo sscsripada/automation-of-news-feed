@@ -12,6 +12,7 @@ dependencies = [
   "feedparser>=6.0.11",
   "openai>=1.30.0",
   "PyYAML>=6.0.1",
+  "requests>=2.32.0",
 ]
 
 [project.optional-dependencies]
@@ -27,4 +28,3 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

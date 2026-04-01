@@ -35,6 +35,18 @@ def generate_checkin(
     return target
 
 
+def collect_digests(
+    config_path: str | Path,
+    lookback_days: int = 2,
+    max_articles: int = 5,
+    model: str | None = None,
+) -> tuple[list[CompanyDigest], date]:
+    companies = load_watchlist(config_path)
+    summarizer = NewsSummarizer(model=model)
+    digests = build_digests(companies, lookback_days=lookback_days, max_articles=max_articles, summarizer=summarizer)
+    return digests, date.today()
+
+
 def build_digests(
     companies: list[Company],
     lookback_days: int,

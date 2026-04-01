@@ -5,7 +5,8 @@ import os
 from datetime import date
 from pathlib import Path
 
-from news_feed.pipeline import generate_checkin
+from news_feed.pipeline import collect_digests, generate_checkin, render_markdown
+from news_feed.slack import build_slack_payload, post_slack_webhook, write_slack_payload
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,21 +30,43 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum articles per company.",
     )
     parser.add_argument("--model", default=os.getenv("OPENAI_MODEL"), help="Optional OpenAI model override.")
+    parser.add_argument("--slack-output", help="Optional path to write a Slack webhook payload JSON file.")
+    parser.add_argument(
+        "--post-to-slack",
+        action="store_true",
+        help="Post the digest to Slack using SLACK_WEBHOOK_URL.",
+    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    output = generate_checkin(
+    digests, report_date = collect_digests(
         config_path=Path(args.config),
-        output_path=Path(args.output),
         lookback_days=args.lookback_days,
         max_articles=args.max_articles,
         model=args.model,
     )
+
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_markdown(digests, report_date=report_date, lookback_days=args.lookback_days))
+
+    if args.slack_output:
+        slack_payload = build_slack_payload(digests, report_date=report_date, lookback_days=args.lookback_days)
+        slack_output = Path(args.slack_output)
+        slack_output.parent.mkdir(parents=True, exist_ok=True)
+        write_slack_payload(str(slack_output), slack_payload)
+
+    if args.post_to_slack:
+        webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+        if not webhook_url:
+            raise SystemExit("SLACK_WEBHOOK_URL is required when using --post-to-slack")
+        slack_payload = build_slack_payload(digests, report_date=report_date, lookback_days=args.lookback_days)
+        post_slack_webhook(webhook_url, slack_payload)
+
     print(f"Generated {output}")
 
 
 if __name__ == "__main__":
     main()
-

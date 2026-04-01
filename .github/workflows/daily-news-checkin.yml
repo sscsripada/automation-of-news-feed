@@ -31,7 +31,7 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
           NEWS_LOOKBACK_DAYS: ${{ vars.NEWS_LOOKBACK_DAYS || '2' }}
           NEWS_MAX_ARTICLES: ${{ vars.NEWS_MAX_ARTICLES || '5' }}
-        run: generate-news-checkin
+        run: generate-news-checkin --slack-output tmp/slack_payload.json
 
       - name: Commit and push check-in
         run: |
@@ -41,3 +41,28 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "docs: add daily news check-in for $(date -u +%F)"
           git push
+
+      - name: Post digest to Slack
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          with open("tmp/slack_payload.json", "rb") as handle:
+              payload = handle.read()
+
+          request = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=payload,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+
+          with urllib.request.urlopen(request, timeout=20) as response:
+              if response.status >= 300:
+                  raise SystemExit(f"Slack webhook failed with status {response.status}")
+          PY
