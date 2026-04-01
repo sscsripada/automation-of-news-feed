@@ -1,0 +1,2 @@
+[console_scripts]
+generate-news-checkin = news_feed.cli:main

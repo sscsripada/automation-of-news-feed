@@ -1,0 +1,25 @@
+companies:
+  - name: 8x8 Inc
+    category: customer
+    query: '"8x8 Inc" OR "8x8" UCaaS OR "8x8" "contact center"'
+    notes: UCaaS and contact-center platform customer watch.
+
+  - name: Oracle
+    category: customer
+    query: 'Oracle enterprise software cloud'
+    notes: Watch for product, partnership, and earnings signals.
+
+  - name: JLL
+    category: customer
+    query: 'JLL OR "Jones Lang LaSalle"'
+    notes: Real-estate and workplace services coverage.
+
+  - name: Microsoft
+    category: competitor
+    query: 'Microsoft OR "Microsoft Teams" OR Azure'
+    notes: Collaboration, AI, and cloud positioning.
+
+  - name: AWS
+    category: competitor
+    query: 'AWS OR "Amazon Web Services"'
+    notes: Cloud platform launches, partnerships, and enterprise wins.

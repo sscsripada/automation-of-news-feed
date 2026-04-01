@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daily-company-news-feed"
+version = "0.1.0"
+description = "Generate daily customer and competitor news check-ins."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "feedparser>=6.0.11",
+  "openai>=1.30.0",
+  "PyYAML>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[project.scripts]
+generate-news-checkin = "news_feed.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
