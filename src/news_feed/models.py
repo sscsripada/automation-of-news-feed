@@ -13,6 +13,13 @@ class Company:
 
 
 @dataclass(slots=True)
+class Recipient:
+    name: str
+    slack_user_id: str
+    companies: list[str]
+
+
+@dataclass(slots=True)
 class Article:
     title: str
     link: str

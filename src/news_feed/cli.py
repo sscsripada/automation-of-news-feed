@@ -5,8 +5,8 @@ import os
 from datetime import date
 from pathlib import Path
 
-from news_feed.pipeline import collect_digests, generate_checkin, render_markdown
-from news_feed.slack import build_slack_payload, post_slack_dm, write_slack_payload
+from news_feed.pipeline import build_recipient_digests, collect_digests, generate_checkin, render_markdown
+from news_feed.slack import build_slack_payload, post_slack_dm, post_slack_dms, write_slack_payload
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,10 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--model", default=os.getenv("OPENAI_MODEL"), help="Optional OpenAI model override.")
     parser.add_argument("--slack-output", help="Optional path to write a Slack webhook payload JSON file.")
+    parser.add_argument("--recipients-config", help="Optional path to CSV/XLS/XLSX/YAML recipient mappings.")
     parser.add_argument(
         "--post-to-slack",
         action="store_true",
-        help="Post the digest to Slack DM using SLACK_BOT_TOKEN and SLACK_USER_ID.",
+        help="Post the digest to Slack DM using SLACK_BOT_TOKEN and either SLACK_USER_ID or --recipients-config.",
     )
     return parser
 
@@ -61,10 +62,24 @@ def main() -> None:
     if args.post_to_slack:
         bot_token = os.getenv("SLACK_BOT_TOKEN")
         user_id = os.getenv("SLACK_USER_ID")
-        if not bot_token or not user_id:
-            raise SystemExit("SLACK_BOT_TOKEN and SLACK_USER_ID are required when using --post-to-slack")
-        slack_payload = build_slack_payload(digests, report_date=report_date, lookback_days=args.lookback_days)
-        post_slack_dm(bot_token, user_id, slack_payload)
+        if not bot_token:
+            raise SystemExit("SLACK_BOT_TOKEN is required when using --post-to-slack")
+
+        if args.recipients_config:
+            recipient_digests = build_recipient_digests(args.recipients_config, digests)
+            recipient_payloads = [
+                (
+                    recipient,
+                    build_slack_payload(personalized_digests, report_date=report_date, lookback_days=args.lookback_days),
+                )
+                for recipient, personalized_digests in recipient_digests
+            ]
+            post_slack_dms(bot_token, recipient_payloads)
+        elif user_id:
+            slack_payload = build_slack_payload(digests, report_date=report_date, lookback_days=args.lookback_days)
+            post_slack_dm(bot_token, user_id, slack_payload)
+        else:
+            raise SystemExit("Provide SLACK_USER_ID or --recipients-config when using --post-to-slack")
 
     print(f"Generated {output}")
 

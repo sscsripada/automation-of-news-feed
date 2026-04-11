@@ -6,7 +6,7 @@ from typing import Any
 
 import requests
 
-from news_feed.models import CompanyDigest
+from news_feed.models import CompanyDigest, Recipient
 
 
 SLACK_API_BASE_URL = "https://slack.com/api"
@@ -88,6 +88,11 @@ def post_slack_dm(bot_token: str, user_id: str, payload: dict[str, Any], timeout
     message_data = message_response.json()
     if not message_data.get("ok"):
         raise RuntimeError(f"Slack chat.postMessage failed: {message_data.get('error', 'unknown_error')}")
+
+
+def post_slack_dms(bot_token: str, recipient_payloads: list[tuple[Recipient, dict[str, Any]]], timeout: int = 20) -> None:
+    for recipient, payload in recipient_payloads:
+        post_slack_dm(bot_token, recipient.slack_user_id, payload, timeout=timeout)
 
 
 def write_slack_payload(output_path: str, payload: dict[str, Any]) -> None:

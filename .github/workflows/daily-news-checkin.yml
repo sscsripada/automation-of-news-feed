@@ -17,6 +17,8 @@ jobs:
     env:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_USER_ID: U0AR58T5V40
+      RECIPIENTS_CONFIG: config/recipients.csv
+      WATCHLIST_CONFIG: config/watchlist.csv
 
     steps:
       - name: Check out repository
@@ -38,7 +40,7 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
           NEWS_LOOKBACK_DAYS: ${{ vars.NEWS_LOOKBACK_DAYS || '2' }}
           NEWS_MAX_ARTICLES: ${{ vars.NEWS_MAX_ARTICLES || '5' }}
-        run: generate-news-checkin --slack-output tmp/slack_payload.json
+        run: generate-news-checkin --config "$WATCHLIST_CONFIG" --slack-output tmp/slack_payload.json
 
       - name: Commit and push check-in
         run: |
@@ -50,10 +52,10 @@ jobs:
           git push
 
       - name: Post digest to Slack DM
-        if: ${{ env.SLACK_BOT_TOKEN != '' && env.SLACK_USER_ID != '' }}
+        if: ${{ env.SLACK_BOT_TOKEN != '' && (env.SLACK_USER_ID != '' || env.RECIPIENTS_CONFIG != '') }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
           NEWS_LOOKBACK_DAYS: ${{ vars.NEWS_LOOKBACK_DAYS || '2' }}
           NEWS_MAX_ARTICLES: ${{ vars.NEWS_MAX_ARTICLES || '5' }}
-        run: generate-news-checkin --post-to-slack
+        run: generate-news-checkin --config "$WATCHLIST_CONFIG" --recipients-config "$RECIPIENTS_CONFIG" --post-to-slack

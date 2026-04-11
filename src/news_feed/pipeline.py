@@ -10,8 +10,8 @@ from urllib.request import Request, urlopen
 
 import feedparser
 
-from news_feed.config import load_watchlist
-from news_feed.models import Article, Company, CompanyDigest
+from news_feed.config import load_recipients, load_watchlist
+from news_feed.models import Article, Company, CompanyDigest, Recipient
 from news_feed.summarizer import NewsSummarizer
 
 
@@ -45,6 +45,23 @@ def collect_digests(
     summarizer = NewsSummarizer(model=model)
     digests = build_digests(companies, lookback_days=lookback_days, max_articles=max_articles, summarizer=summarizer)
     return digests, date.today()
+
+
+def build_recipient_digests(recipients_config_path: str | Path, digests: list[CompanyDigest]) -> list[tuple[Recipient, list[CompanyDigest]]]:
+    recipients = load_recipients(recipients_config_path)
+    digest_map = {digest.company.name.casefold(): digest for digest in digests}
+    personalized: list[tuple[Recipient, list[CompanyDigest]]] = []
+
+    for recipient in recipients:
+        recipient_digests = []
+        for company_name in recipient.companies:
+            digest = digest_map.get(company_name.casefold())
+            if digest is not None:
+                recipient_digests.append(digest)
+        if recipient_digests:
+            personalized.append((recipient, recipient_digests))
+
+    return personalized
 
 
 def build_digests(
